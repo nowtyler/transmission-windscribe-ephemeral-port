@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - transmission-port
     tags:
       - "v*"
   workflow_dispatch:
@@ -33,6 +34,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             type=ref,event=tag
             type=sha,prefix=sha-
 

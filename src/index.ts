@@ -2,7 +2,7 @@ import 'dotenv/config';
 import path from 'path';
 import {KeyvFile} from 'keyv-file';
 import {getConfig} from './config.js';
-import {QBittorrentClient} from './QBittorrentClient.js';
+import {TransmissionClient} from './TransmissionClient.js';
 import {WindscribeClient, WindscribePort} from './WindscribeClient.js';
 import {schedule} from 'node-cron';
 import * as fs from 'fs';
@@ -12,7 +12,7 @@ import Docker from 'dockerode';
 const config = getConfig();
 
 // Docker client setup
-const docker = config.gluetunContainerName && config.qbittorrentContainerName ? new Docker({socketPath: '/var/run/docker.sock'}) : null;
+const docker = config.gluetunContainerName && config.transmissionContainerName ? new Docker({socketPath: '/var/run/docker.sock'}) : null;
 
 // init cache (if configured)
 const cache = !config.cacheDir ? undefined : new KeyvFile({
@@ -23,7 +23,7 @@ const cache = !config.cacheDir ? undefined : new KeyvFile({
 const windscribe = new WindscribeClient(config.windscribeUsername, config.windscribePassword, config.flaresolverrUrl, cache, config.windscribeTotpSecret);
 
 // init torrent client
-const client = new QBittorrentClient(config.clientUrl, config.clientUsername, config.clientPassword);
+const client = new TransmissionClient(config.clientUrl, config.clientUsername, config.clientPassword);
 
 // init schedule if configured
 const scheduledTask = !config.cronSchedule
@@ -77,10 +77,10 @@ async function update() {
             .restart()
             .then(() => {
               console.log(`Restarted Gluetun container: ${config.gluetunContainerName}`);
-              return docker.getContainer(config.qbittorrentContainerName).restart();
+              return docker.getContainer(config.transmissionContainerName).restart();
             })
             .then(() => {
-              console.log(`Restarted qbittorrent container: ${config.qbittorrentContainerName}`);
+              console.log(`Restarted Transmission container: ${config.transmissionContainerName}`);
             })
             .catch(err => {
               console.error('Failed to restart container:', err);
