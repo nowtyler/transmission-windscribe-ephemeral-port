@@ -94,8 +94,8 @@ const configTemplate = {
     required: false,
     type: String,
   } as ConfigTemplateOptionalEntry<string>,
-  qbittorrentContainerName: {
-    envVariableName: 'QBITTORRENT_CONTAINER_NAME',
+  transmissionContainerName: {
+    envVariableName: 'TRANSMISSION_CONTAINER_NAME',
     required: false,
     type: String,
   } as ConfigTemplateOptionalEntry<string>,
