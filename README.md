@@ -1,4 +1,6 @@
-# [qbittorrent-windscribe-ephemeral-port](https://github.com/AndriiBarabash/qbittorrent-windscribe-ephemeral-port)
+# [transmission-windscribe-ephemeral-port](https://github.com/nowtyler/transmission-windscribe-ephemeral-port)
+
+Forked from [AndriiBarabash/qbittorrent-windscribe-ephemeral-port](https://github.com/AndriiBarabash/qbittorrent-windscribe-ephemeral-port), which was itself forked from [dumbasPL/deluge-windscribe-ephemeral-port](https://github.com/dumbasPL/deluge-windscribe-ephemeral-port).
 
 ## Disclaimer
 This project is not intended to be taken as a serious or professionally maintained solution.
@@ -8,10 +10,10 @@ The author assumes no responsibility for any issues, damages, or legal consequen
 Use at your own risk.
 
 ## Introduction
-Automatically create ephemeral ports in windscribe and update qbittorrent config to use the new port.
+Automatically create ephemeral ports in Windscribe and update Transmission config to use the new port.
 Also exports the new port as iptables rule for Gluetun.
 
-This repo is for qbittorrent only. For Deluge, check out the original repo this qbittorrent version is forked from: [deluge-windscribe-ephemeral-port](https://github.com/dumbasPL/deluge-windscribe-ephemeral-port)
+This repo is for Transmission. For the qBittorrent version, check out [qbittorrent-windscribe-ephemeral-port](https://github.com/AndriiBarabash/qbittorrent-windscribe-ephemeral-port). For Deluge, check out the original repo it was forked from: [deluge-windscribe-ephemeral-port](https://github.com/dumbasPL/deluge-windscribe-ephemeral-port)
 
 ## Prerequisites
 Before using this project, you must deploy [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr). 
@@ -21,8 +23,8 @@ Without FlareSolverr, the script cannot successfully authenticate due to Cloudfl
 Deploy it on your server (e.g., via Docker) and ensure it’s accessible to this script.
 
 ## Important information
-This project was designed to work along side containers like [linuxserver/qbittorrent](https://docs.linuxserver.io/images/docker-qbittorrent) in mind.  
-It will not help you route qbittorrent traffic through a VPN! For that, you can use [qdm12/gluetun](https://github.com/qdm12/gluetun). What it will do is to update the listening port of qbittorrent and export iptables rules for Gluetun.
+This project was designed to work alongside Transmission containers.  
+It will not help you route Transmission traffic through a VPN. For that, you can use [qdm12/gluetun](https://github.com/qdm12/gluetun). What it will do is update the listening port used by Transmission and export iptables rules for Gluetun.
 
 ## Gluetun compatibility
 If you want the Gluetun container to pick up the iptables changes, you have to restart it. This project can do it for you, but to use it you **must** mount the Docker socket (`/var/run/docker.sock`) into this container.
@@ -38,18 +40,18 @@ Configuration is done using environment variables
 | WINDSCRIBE_PASSWORD | password you use to login at windscribe.com/login | YES |  |
 | WINDSCRIBE_TOTP_SECRET | TOTP secret for 2FA authentication (Base32 encoded). Required if 2FA is enabled on your Windscribe account. See [2FA Setup](#2fa-setup) | NO |  |
 | FLARESOLVERR_URL | The URL of [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) to bypass Cloudflare challenge | YES |  | 
-| CLIENT_URL | The URL for the qbittorrent web UI (eg: http://localhost:8080) | YES |  |
-| CLIENT_USERNAME | The username for the qbittorrent web UI | YES |  |
-| CLIENT_PASSWORD | The password for the qbittorrent web UI | YES |  |
+| CLIENT_URL | The URL for the Transmission RPC or web UI endpoint | YES |  |
+| CLIENT_USERNAME | The username for the Transmission web UI or RPC endpoint | YES |  |
+| CLIENT_PASSWORD | The password for the Transmission web UI or RPC endpoint | YES |  |
 | CRON_SCHEDULE | An extra cron schedule used to periodically validate and update the port if needed. Disabled if left empty | NO |  |
 | WINDSCRIBE_RETRY_DELAY | how long to wait (in milliseconds) before retrying after a windscribe error. For example a failed login. | NO | 3600000 (1 hour) |
 | WINDSCRIBE_EXTRA_DELAY | how long to wait (in milliseconds) after the ephemeral port expires before trying to create a new one. | NO | 60000 (1 minute) |
-| CLIENT_RETRY_DELAY | how long to wait (in milliseconds) before retrying after a qbittorrent error. For example a failed login. | NO | 300000 (5 minutes) |
+| CLIENT_RETRY_DELAY | how long to wait (in milliseconds) before retrying after a Transmission client error. For example a failed login. | NO | 300000 (5 minutes) |
 | CACHE_DIR | A directory where to store cached data like windscribe session cookies | NO | `/cache` in the docker container and `./cache` everywhere else |
 | GLUETUN_DIR | A directory where to write iptables entry for gluetun | NO | `/post-rules.txt` in the docker container and `./post-rules.txt` everywhere else |
 | GLUETUN_IFACE | Gluetun vpn interface name | NO | `tun0` |
 | GLUETUN_CONTAINER_NAME | Name of the Gluetun Docker container to restart. If set, the app will try to restart the container after updating iptables rules. Both container names are required | NO | |
-| QBITTORRENT_CONTAINER_NAME | Name of the qbittorrent Docker container to restart. If set, the app will try to restart the container after updating iptables rules. Both container names are required | NO | |
+| QBITTORRENT_CONTAINER_NAME | Legacy variable name for the downloader container to restart. In this fork, it should refer to your Transmission container if you use the restart feature. Both container names are required | NO | |
 
 ## 2FA Setup
 
@@ -69,8 +71,8 @@ The secret is a Base32-encoded string (uppercase letters A-Z and digits 2-7). Se
 ```yaml
 version: '3.8'
 services:
-  qbittorrent-windscribe-ephemeral-port:
-    image: andriibarabash/qbittorrent-windscribe-ephemeral-port:latest
+  transmission-windscribe-ephemeral-port:
+    image: ghcr.io/nowtyler/transmission-windscribe-ephemeral-port:latest
     restart: unless-stopped
     volumes:
       - windscribe-cache:/cache
@@ -82,9 +84,9 @@ services:
       - WINDSCRIBE_USERNAME=<your windscribe username>
       - WINDSCRIBE_PASSWORD=<your windscribe password>
       - FLARESOLVERR_URL=http://flaresolverr:8191/v1
-      - CLIENT_URL=<url of your qbittorrent Web UI>
-      - CLIENT_USERNAME=<username for the qbittorrent Web UI>
-      - CLIENT_PASSWORD=<password for the qbittorrent Web UI>
+      - CLIENT_URL=<url of your Transmission RPC or Web UI>
+      - CLIENT_USERNAME=<username for your Transmission RPC or Web UI>
+      - CLIENT_PASSWORD=<password for your Transmission RPC or Web UI>
 
       # optional
       # - CLIENT_RETRY_DELAY=300000
@@ -96,7 +98,7 @@ services:
       # - GLUETUN_DIR=/post-rules.txt
       # - GLUETUN_IFACE=tun0
       # - GLUETUN_CONTAINER_NAME=gluetun
-      # - QBITTORRENT_CONTAINER_NAME=qbittorrent
+      # - QBITTORRENT_CONTAINER_NAME=transmission
 
 volumes:
   windscribe-cache:
@@ -105,7 +107,7 @@ volumes:
 ## Using nodejs
 
 **This project requires Node.js version 16 or newer**  
-**This project uses [yarn](https://classic.yarnpkg.com/) to manage dependencies, make sure you have it installed first.**
+**This project uses [yarn](https://classic.yarnpkg.com/) to manage dependencies. Yarn is the package manager for this repo, similar to `npm`.**
 
 1. clone this repository
 2. Install dependencies by running `yarn install`
@@ -114,9 +116,9 @@ volumes:
 WINDSCRIBE_USERNAME=<your windscribe username>
 WINDSCRIBE_PASSWORD=<your windscribe password>
 FLARESOLVERR_URL=<url of your FlareSolverr>
-CLIENT_URL=<url of your qbittorrent Web UI>
-CLIENT_USERNAME=<username of your qbittorrent Web UI>
-CLIENT_PASSWORD=<password for the qbittorrent Web UI>
+CLIENT_URL=<url of your Transmission RPC or Web UI>
+CLIENT_USERNAME=<username of your Transmission RPC or Web UI>
+CLIENT_PASSWORD=<password for your Transmission RPC or Web UI>
 
 # optional
 # WINDSCRIBE_TOTP_SECRET=<your TOTP secret if 2FA is enabled>
@@ -125,8 +127,9 @@ CLIENT_PASSWORD=<password for the qbittorrent Web UI>
 # CRON_SCHEDULE=
 # CACHE_DIR=./cache
 # GLUETUN_CONTAINER_NAME=gluetun
-# QBITTORRENT_CONTAINER_NAME=qbittorrent
+# QBITTORRENT_CONTAINER_NAME=transmission
 ```
-4. Build and start using `yarn install`
+4. Build the project with `yarn build`
+5. Run it once with `yarn start`, or use `yarn dev` while developing
 
 Tip: you can use tools like pm2 to manage nodejs applications
